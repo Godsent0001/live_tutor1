@@ -1,0 +1,37 @@
+name: live_tutor
+description: AI-powered live tutor app
+
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.0
+  flutter: ">=3.35.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^2.6.1
+  dio: ^5.9.2
+  shared_preferences: ^2.3.0
+  go_router: ^14.8.1
+  google_fonts: ^6.3.3
+  flutter_animate: ^4.5.0
+  cupertino_icons: ^1.0.8
+  file_picker: ^8.1.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icon/

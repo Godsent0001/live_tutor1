@@ -1,0 +1,28 @@
+# FastAPI core
+fastapi
+uvicorn[standard]
+
+# Pydantic settings (config.py)
+pydantic
+pydantic-settings
+
+# MongoDB (future-ready)
+pymongo
+
+# HTTP requests (LLM / external APIs)
+httpx
+
+# JWT auth
+python-jose[cryptography]
+
+# Environment variables
+python-dotenv
+
+# File handling (optional future uploads)
+python-multipart
+
+# Logging (optional enhancement support)
+loguru
+
+# JSON safety / parsing helpers (stdlib used, but optional helpers benefit)
+orjson
