@@ -26,7 +26,7 @@ class LLMService:
         self.api_key = settings.GEMINI_API_KEY
         # Gemini API URL structure:
         
-        self.base_url =self.base_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={self.api_key}"
+        self.base_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
         if not self.api_key:
             raise Exception("GEMINI_API_KEY not set in environment")
@@ -107,10 +107,15 @@ class LLMService:
             "Content-Type": "application/json"
         }
 
+        params = {
+            "key": self.api_key
+        }
+
         async with httpx.AsyncClient(timeout=60) as client:
             response = await client.post(
                 self.base_url,
                 headers=headers,
+                params=params,
                 json=payload
             )
 
