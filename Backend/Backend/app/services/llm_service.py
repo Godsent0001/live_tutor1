@@ -26,7 +26,7 @@ class LLMService:
         self.api_key = settings.GEMINI_API_KEY
         # Gemini API URL structure:
         
-        self.base_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+        self.base_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent"
 
         if not self.api_key:
             raise Exception("GEMINI_API_KEY not set in environment")
