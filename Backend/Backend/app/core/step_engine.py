@@ -139,7 +139,16 @@ class StepEngine:
 
         module = lesson.modules[m_idx]
 
-        is_last_module = (m_idx == len(lesson.modules) - 1)
+        # In the dynamic flow, we are only truly at the end if:
+        # 1. We are on the last step of the current module
+        # 2. This module is the LAST one for the LAST sub-topic
+
+        is_last_subtopic = (m_idx == len(lesson.sub_topics) - 1)
+
+        # If sub_topics is empty (old lessons), fallback to modules count
+        if not lesson.sub_topics:
+            is_last_subtopic = (m_idx == len(lesson.modules) - 1)
+
         is_last_step = (s_idx == len(module.steps) - 1)
 
-        return is_last_module and is_last_step
+        return is_last_subtopic and is_last_step
