@@ -3,7 +3,11 @@ import uuid
 import json
 
 from app.services.llm_service import LLMService
-from app.prompts.lesson_generator_prompt import build_lesson_prompt
+from app.prompts.lesson_generator_prompt import (
+    build_lesson_prompt,
+    build_subtopics_prompt,
+    build_single_module_prompt
+)
 
 
 class LessonEngine:
@@ -23,6 +27,61 @@ class LessonEngine:
 
     def __init__(self):
         self.llm = LLMService()
+
+    async def generate_sub_topics(
+        self,
+        topic: str,
+        extra_materials: List[str] = None,
+        context_prompt: str = None
+    ) -> Dict[str, Any]:
+        """
+        Generates a list of sub-topics for a topic.
+        """
+        prompt = build_subtopics_prompt(
+            topic=topic,
+            extra_materials=extra_materials or [],
+            context_prompt=context_prompt
+        )
+        return await self.llm.generate_json(prompt)
+
+    async def generate_single_module(
+        self,
+        lesson_title: str,
+        sub_topic: str,
+        context_prompt: str = None
+    ) -> Dict[str, Any]:
+        """
+        Generates a single module for a sub-topic.
+        """
+        prompt = build_single_module_prompt(
+            lesson_title=lesson_title,
+            sub_topic=sub_topic,
+            context_prompt=context_prompt
+        )
+        raw_module = await self.llm.generate_json(prompt)
+        return self._normalize_module(raw_module)
+
+    def _normalize_module(self, raw_module: Dict[str, Any]) -> Dict[str, Any]:
+        steps = raw_module.get("steps", [])
+        cleaned_steps = []
+        for step in steps:
+            cleaned_steps.append({
+                "step_id": step.get("step_id", str(uuid.uuid4())),
+                "speech": step.get("speech", ""),
+                "board": step.get("board", {
+                    "type": "bullet",
+                    "content": []
+                }),
+                "question": step.get("question", {
+                    "type": "recall",
+                    "text": ""
+                }),
+                "expected_concepts": step.get("expected_concepts", [])
+            })
+        return {
+            "module_title": raw_module.get("module_title", "Untitled Module"),
+            "steps": cleaned_steps
+        }
 
     async def create_lesson(
         self,

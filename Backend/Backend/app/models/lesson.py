@@ -33,6 +33,8 @@ class Lesson:
     lesson_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     user_id: str = ""
     topic: str = ""
+    sub_topics: List[str] = field(default_factory=list)
+    context_prompt: Optional[str] = None
 
     modules: List[LessonModule] = field(default_factory=list)
 
@@ -59,6 +61,8 @@ class Lesson:
             "lesson_id": self.lesson_id,
             "user_id": self.user_id,
             "topic": self.topic,
+            "sub_topics": self.sub_topics,
+            "context_prompt": self.context_prompt,
 
             "modules": [
                 {
@@ -114,6 +118,8 @@ class Lesson:
             lesson_id=data.get("lesson_id", str(uuid.uuid4())),
             user_id=data.get("user_id", ""),
             topic=data.get("topic", ""),
+            sub_topics=data.get("sub_topics", []),
+            context_prompt=data.get("context_prompt"),
             modules=modules,
             created_at=data.get("created_at", str(datetime.utcnow())),
             updated_at=data.get("updated_at", str(datetime.utcnow()))

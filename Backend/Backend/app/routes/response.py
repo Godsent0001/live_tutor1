@@ -10,12 +10,15 @@ from app.services.storage_service import StorageService
 from app.core.step_engine import StepEngine
 from app.models.response import StudentResponse
 from app.models.session import Session
+from app.models.lesson import Lesson, LessonModule, LessonStep
+from app.core.lesson_engine import LessonEngine
 
 router = APIRouter()
 
 llm = LLMService()
 storage = StorageService()
 step_engine = StepEngine()
+lesson_engine = LessonEngine()
 
 
 # ----------------------------
@@ -115,13 +118,67 @@ async def submit_response(request: ResponseRequest):
             request.session_id
         )
 
-        # 10. Save updated session
+        # 10. TRIGGER NEXT MODULE GENERATION IF NEEDED
+        # When user reaches step 3 (index 2) of a module, generate the next one
+        # but only if there are more sub-topics to cover.
+        lesson_obj = Lesson.from_dict(lesson)
+        current_module_idx = updated_session.get("current_module_index", 0)
+        current_step_idx = updated_session.get("current_step_index", 0)
+
+        # Check if we should trigger generation
+        # We trigger when the user just advanced TO index 2 (the 3rd step)
+        # and we haven't already started generating the next module.
+        if current_step_idx == 2:
+            num_modules_generated = len(lesson_obj.modules)
+            num_subtopics = len(lesson_obj.sub_topics)
+
+            # If there's a sub-topic that hasn't been turned into a module yet
+            # AND we are currently in the LAST generated module
+            if num_modules_generated < num_subtopics and current_module_idx == num_modules_generated - 1:
+                # Generate the NEXT sub-topic (at index num_modules_generated)
+                next_subtopic = lesson_obj.sub_topics[num_modules_generated]
+
+                try:
+                    module_data = await lesson_engine.generate_single_module(
+                        lesson_title=lesson_obj.topic,
+                        sub_topic=next_subtopic,
+                        context_prompt=lesson_obj.context_prompt
+                    )
+
+                    if module_data and "steps" in module_data:
+                        new_steps = [
+                            LessonStep(
+                                step_id=s.get("step_id", str(uuid.uuid4())),
+                                speech=s.get("speech", ""),
+                                board=s.get("board", {"type": "bullet", "content": []}),
+                                question=s.get("question", {"type": "recall", "text": ""}),
+                                expected_concepts=s.get("expected_concepts", [])
+                            ) for s in module_data["steps"]
+                        ]
+
+                        lesson_obj.modules.append(
+                            LessonModule(
+                                module_title=module_data.get("module_title", next_subtopic),
+                                steps=new_steps
+                            )
+                        )
+
+                        # Save the updated lesson
+                        storage.save_lesson(
+                            lesson_obj.lesson_id,
+                            lesson_obj.to_dict()
+                        )
+                except Exception as e:
+                    # Log error but don't crash the main flow
+                    print(f"Error generating next module: {e}")
+
+        # 11. Save updated session
         storage.save_session(
             session.session_id,
             updated_session
         )
 
-        # 11. Get NEXT STEP (optional but powerful UX)
+        # 12. Get NEXT STEP (optional but powerful UX)
         next_step = step_engine.get_current_step(
             request.session_id
         )
